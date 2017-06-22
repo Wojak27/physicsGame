@@ -16,11 +16,18 @@ class GameScene: SKScene {
     private var label : SKLabelNode?
     private var ball : SKSpriteNode!
     private var pointerBall : SKSpriteNode?
+    var scoreLabel:SKLabelNode!
+    var score:Int = 0 {
+        didSet {
+            scoreLabel.text = "Score: \(score)"
+        }
+    }
+
     
     override func didMove(to view: SKView) {
-
-
-        self.physicsWorld.gravity = CGVector(dx: 0, dy: -8)
+        
+        
+        self.physicsWorld.gravity = CGVector(dx: 0, dy: 0)
         
         textField.frame = CGRect(x: 0, y: 0, width: 100, height: 20)
         
@@ -32,6 +39,16 @@ class GameScene: SKScene {
 
         addWall()
         spawnBall()
+        
+        scoreLabel = SKLabelNode(text: "Score: 0")
+        scoreLabel.position = CGPoint(x: 50, y: 100)
+        scoreLabel.fontName = "AppleColorEmoji"
+        scoreLabel.fontSize = 36
+        scoreLabel.fontColor = UIColor.white
+        score = 0
+        
+        self.addChild(scoreLabel)
+    
 
 
 //        // Get label node from scene and store it for use later
@@ -53,6 +70,11 @@ class GameScene: SKScene {
 //                                              SKAction.fadeOut(withDuration: 0.5),
 //                                              SKAction.removeFromParent()]))
 //        }
+        /*ksjdbvs
+         ksdj csd
+         ksjdbc
+         sjd ckds vc
+                */
     }
     var wall: SKSpriteNode!
 
@@ -86,16 +108,27 @@ class GameScene: SKScene {
     }
 
     func spawnBall(){
+        
+        self.physicsWorld.gravity = CGVector(dx: 0, dy: 0)
 
         let ballSize = CGSize(width: 100, height: 100)
-        ball = SKSpriteNode.init(imageNamed: "/Users/karolwojtulewicz/Documents/Physics Game/physicsGame/physicsGame/ball.png")
+        ball = SKSpriteNode.init(imageNamed: "/Users/karol/Documents/physicsGame/physicsGame/square.png")
         ball.size = ballSize
         ball.name = "ball"
-        ball.position = CGPoint(x: 0, y: 500)
+        ball.position = CGPoint(x: 0, y: -100)
         ball.physicsBody = SKPhysicsBody(circleOfRadius: ballSize.height/2)
         ball.physicsBody?.angularDamping = 2
         ball.physicsBody?.affectedByGravity = true
         ball.physicsBody?.allowsRotation = true
+        
+        scoreLabel = SKLabelNode(text: "Score: 0")
+        scoreLabel.position = CGPoint(x: 100, y: self.frame.size.height - 60)
+        scoreLabel.fontName = "AppleColorEmoji"
+        scoreLabel.fontSize = 36
+        scoreLabel.fontColor = UIColor.white
+        score = 0
+        
+        self.addChild(scoreLabel)
         
 
 //        ball.fillColor = SKColor(red: 1, green:0, blue:1, alpha: 2.0)
@@ -107,13 +140,6 @@ class GameScene: SKScene {
 
     private var isDown: Bool = false
 
-    func applyForce(pos: CGPoint){
-        
-
-        while(self.isDown){
-            
-        }
-    }
     
     func addBlow(pos: CGPoint, direction: CGVector){
         let burstPath = Bundle.main.path(forResource: "Blower",
@@ -138,6 +164,7 @@ class GameScene: SKScene {
 //            n.strokeColor = SKColor.green
 //            self.addChild(n)
 //        }
+        self.physicsWorld.gravity = CGVector(dx: 0, dy: -6)
         isDown = true
         let force = 2500000*sqrt(2)/sqrt(pow((pos.x-ball.position.x+1), 2)+pow(pos.y-ball.position.y+1,2))
         
