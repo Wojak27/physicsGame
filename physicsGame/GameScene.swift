@@ -41,9 +41,9 @@ class GameScene: SKScene {
         spawnBall()
         
         scoreLabel = SKLabelNode(text: "Score: 0")
-        scoreLabel.position = CGPoint(x: 50, y: 100)
+        scoreLabel.position = CGPoint(x: 30, y: 580)
         scoreLabel.fontName = "AppleColorEmoji"
-        scoreLabel.fontSize = 36
+        scoreLabel.fontSize = 30
         scoreLabel.fontColor = UIColor.white
         score = 0
         
@@ -178,10 +178,11 @@ class GameScene: SKScene {
         
         print(self.isDown)
 
-
-
+        score += 1
 
     }
+    
+    
     
     func randomMovement(constant: Int)->Int{
         let randomize:UInt32 = arc4random_uniform(UInt32(constant))
