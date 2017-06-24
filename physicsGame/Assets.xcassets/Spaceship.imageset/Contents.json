@@ -1,9 +1,23 @@
 {
   "images" : [
     {
+      "resizing" : {
+        "mode" : "9-part",
+        "center" : {
+          "mode" : "tile",
+          "width" : 267,
+          "height" : 83
+        },
+        "cap-insets" : {
+          "bottom" : 88,
+          "top" : 45,
+          "right" : 105,
+          "left" : 22
+        }
+      },
       "idiom" : "universal",
-      "scale" : "1x",
-      "filename" : "Spaceship.png"
+      "filename" : "Spaceship.png",
+      "scale" : "1x"
     },
     {
       "idiom" : "universal",

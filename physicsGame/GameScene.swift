@@ -8,6 +8,7 @@
 
 import SpriteKit
 import GameplayKit
+import CoreMotion
 
 class GameScene: SKScene {
     
@@ -16,131 +17,71 @@ class GameScene: SKScene {
     private var label : SKLabelNode?
     private var ball : SKSpriteNode!
     private var pointerBall : SKSpriteNode?
-    var scoreLabel:SKLabelNode!
-    var score:Int = 0 {
-        didSet {
-            scoreLabel.text = "Score: \(score)"
-        }
-    }
+    private let manager = CMMotionManager()
+    var dayCounter = 0
+    var dryer: SKSpriteNode! = nil
+    var character: SKSpriteNode! = nil
 
-    
+    private var score:Int = 0
+
     override func didMove(to view: SKView) {
         
-        
+        createBackgrounds()
         self.physicsWorld.gravity = CGVector(dx: 0, dy: 0)
         
-        textField.frame = CGRect(x: 0, y: 0, width: 100, height: 20)
-        
-        textField.textColor = UIColor.white
-        textField.font = UIFont(name: "helvetica", size: 16)
-        textField.text = "lol"
-        
-        self.view?.addSubview(textField)
-
-        addWall()
         spawnBall()
+        createDryer()
         
-        scoreLabel = SKLabelNode(text: "Score: 0")
-        scoreLabel.position = CGPoint(x: 30, y: 580)
-        scoreLabel.fontName = "AppleColorEmoji"
-        scoreLabel.fontSize = 30
-        scoreLabel.fontColor = UIColor.white
-        score = 0
-        
-        self.addChild(scoreLabel)
-    
-
-
-//        // Get label node from scene and store it for use later
-//        self.label = self.childNode(withName: "//helloLabel") as? SKLabelNode
-//        if let label = self.label {
-//            label.alpha = 0.0
-//            label.run(SKAction.fadeIn(withDuration: 2.0))
+    }
+//
+//    func startGyroscope(){
+//        manager.deviceMotionUpdateInterval = 0.01
+//        manager.startDeviceMotionUpdates(to: OperationQueue.current!){
+//            [weak self] (data: CMDeviceMotion?, error: Error?) in
+//            if let gravity = data?.gravity {
+//                self?.dryer.position.x = (self?.dryer.position.x)! + CGFloat(gravity.x*10)
+//            
+//            }
 //        }
-//
-//        // Create shape node to use during mouse interaction
-//        let w = (self.size.width + self.size.height) * 0.05
-//        self.spinnyNode = SKShapeNode.init(rectOf: CGSize.init(width: w, height: w), cornerRadius: w * 0.3)
-//
-//        if let spinnyNode = self.spinnyNode {
-//            spinnyNode.lineWidth = 2.5
-//
-//            spinnyNode.run(SKAction.repeatForever(SKAction.rotate(byAngle: CGFloat(Double.pi), duration: 1)))
-//            spinnyNode.run(SKAction.sequence([SKAction.wait(forDuration: 0.5),
-//                                              SKAction.fadeOut(withDuration: 0.5),
-//                                              SKAction.removeFromParent()]))
-//        }
-        /*ksjdbvs
-         ksdj csd
-         ksjdbc
-         sjd ckds vc
-                */
-    }
-    var wall: SKSpriteNode!
-
-    func addWall(){
-        let wallSize = CGSize(width: 20, height: 300)
-        wall = SKSpriteNode.init(color: UIKit.UIColor.yellow, size: wallSize)
-        wall.size = wallSize
-        wall.name = "wall"
-        wall.position = CGPoint(x: -self.size.width/2 + wall.size.width/2, y: CGFloat(randomMovement(constant: 200)))
-        wall.physicsBody = SKPhysicsBody(rectangleOf: wallSize)
-        wall.physicsBody?.angularDamping = 100
-        wall.physicsBody?.affectedByGravity = false
-        wall.physicsBody?.allowsRotation = false
-        wall.physicsBody?.isDynamic = false
-        wall.physicsBody?.velocity = CGVector(dx: 0, dy: -100)
-        self.addChild(wall)
-    }
-
-    private var direction = -1
-
-    func wallMovement(){
-        var wall: SKSpriteNode = self.childNode(withName: "wall") as! SKSpriteNode
-
-        if (!intersects(wall)){
-            direction = direction * (-1)
-            wall.position = CGPoint(x: -self.size.width/2, y: wall.position.y+CGFloat(direction*5))
-            print("change")
-        }
-        print(direction)
-        wall.position = CGPoint(x: -self.size.width/2, y: wall.position.y+CGFloat(direction*5))
-    }
+//    }
+//    
+//    func stopGyroscope(){
+//        
+//        manager.stopGyroUpdates()
+//    }
 
     func spawnBall(){
         
         self.physicsWorld.gravity = CGVector(dx: 0, dy: 0)
 
         let ballSize = CGSize(width: 100, height: 100)
-        ball = SKSpriteNode.init(imageNamed: "/Users/karol/Documents/physicsGame/physicsGame/square.png")
+        ball = SKSpriteNode.init(imageNamed: "ball.png")
         ball.size = ballSize
         ball.name = "ball"
-        ball.position = CGPoint(x: 0, y: -100)
+        ball.position = CGPoint(x: 0, y: 0)
         ball.physicsBody = SKPhysicsBody(circleOfRadius: ballSize.height/2)
         ball.physicsBody?.angularDamping = 2
         ball.physicsBody?.affectedByGravity = true
         ball.physicsBody?.allowsRotation = true
         
-        scoreLabel = SKLabelNode(text: "Score: 0")
-        scoreLabel.position = CGPoint(x: 100, y: self.frame.size.height - 60)
+        createScoreLabel()
+
+        self.addChild(ball)
+    }
+    
+    func createScoreLabel(){
+        
+        let scoreLabel: SKLabelNode = SKLabelNode(text: "Score: 0")
+        scoreLabel.text = "Score: \(score)"
+        scoreLabel.position = CGPoint(x: 30, y: 580)
         scoreLabel.fontName = "AppleColorEmoji"
-        scoreLabel.fontSize = 36
+        scoreLabel.name = "scoreLabel"
         scoreLabel.fontColor = UIColor.white
         score = 0
         
         self.addChild(scoreLabel)
-        
-
-//        ball.fillColor = SKColor(red: 1, green:0, blue:1, alpha: 2.0)
-//        ball.strokeColor = SKColor(red: 0.15, green:0.15, blue:0.3, alpha: 1.0)
-
-        self.addChild(ball)
     }
 
-
-    private var isDown: Bool = false
-
-    
     func addBlow(pos: CGPoint, direction: CGVector){
         let burstPath = Bundle.main.path(forResource: "Blower",
                                          ofType: "sks")
@@ -149,6 +90,7 @@ class GameScene: SKScene {
             as! SKEmitterNode
         
         burstNode.position = pos
+        burstNode.zPosition = -1
         burstNode.name = "blow"
         burstNode.emissionAngle = CGFloat.pi/2 + atan(-(ball.position.x-pos.x)/(ball.position.y-pos.y))
         burstNode.physicsBody? = SKPhysicsBody()
@@ -157,34 +99,69 @@ class GameScene: SKScene {
         self.addChild(burstNode)
         
     }
+//
+    func createDryer(){
+        let y = CGFloat(400)
+        let posY = CGFloat(-self.size.height/2 + y)
+        dryer = SKSpriteNode.init(imageNamed: "blower.png")
+        dryer.scale(to: CGSize(width: dryer.size.width/4, height: dryer.size.height/4))
+        dryer.anchorPoint = CGPoint(x: 0.5, y: 0.9)
+        dryer.position = CGPoint(x: 0, y: posY)
+        dryer.zPosition = 0
+        dryer.name = "dryer"
+        self.addChild(dryer)
+    }
+
+    func updateDryer(atPoint pos : CGPoint){
+        let dryer: SKSpriteNode = self.childNode(withName: "dryer") as! SKSpriteNode
+        dryer.zRotation =   atan(-(ball.position.x-pos.x)/(ball.position.y-pos.y))
+        let moveBottomLeft = SKAction.move(to: pos, duration:0.1)
+        dryer.run(moveBottomLeft, completion: {self.applyForceVector(atPos: pos)})
+    }
     
     func touchDown(atPoint pos : CGPoint) {
-//        if let n = self.spinnyNode?.copy() as! SKShapeNode? {
-//            n.position = pos
-//            n.strokeColor = SKColor.green
-//            self.addChild(n)
-//        }
+        
+        removeSprite()
+        
         self.physicsWorld.gravity = CGVector(dx: 0, dy: -6)
-        isDown = true
+        let y = CGFloat(400)
+        let posY = CGFloat(-self.size.height/2 + y)
+        
+        let positionBlow: CGPoint = CGPoint(x: pos.x , y: posY)
+        
+        updateDryer(atPoint: positionBlow)
+    
+    }
+    
+
+    func applyForceVector(atPos pos: CGPoint){
         let force = 2500000*sqrt(2)/sqrt(pow((pos.x-ball.position.x+1), 2)+pow(pos.y-ball.position.y+1,2))
         
-        let random = randomMovement(constant: 50)
+        let random = randomNumber(constant: 50)
         var forceVector = CGVector(dx: -force*(pos.x-ball.position.x)/sqrt(pow((pos.x-ball.position.x), 2)+pow(pos.y-ball.position.y,2)), dy: -force*(pos.y-ball.position.y)/sqrt(pow((pos.x-ball.position.x), 2)+pow(pos.y-ball.position.y,2)))
         forceVector.dx = CGFloat(random) + forceVector.dx
         
         ball.physicsBody?.applyForce(forceVector, at: CGPoint(x: ball.position.x+CGFloat(random),y: ball.position.y))
-        addBlow(pos: pos, direction: forceVector)
         
         
-        print(self.isDown)
-
-        score += 1
+        let myFunction = SKAction.run({()in self.addBlow(pos: pos, direction: forceVector)})
+        let wait = SKAction.wait(forDuration: 0.7)
+        let remove = SKAction.run({() in self.removeSprite()})
+        self.run(SKAction.sequence([myFunction, wait, remove]))
 
     }
     
+    func removeSprite() {
+        
+        if let blow = self.childNode(withName: "blow"){
+            blow.removeFromParent()
+        }
+        
+    }
     
     
-    func randomMovement(constant: Int)->Int{
+    // range of number between -contant/2 and constant/2
+    func randomNumber(constant: Int)->Int{
         let randomize:UInt32 = arc4random_uniform(UInt32(constant))
         let randomNumber: Int = Int(randomize)-constant/2
         return randomNumber
@@ -192,7 +169,7 @@ class GameScene: SKScene {
 
     func spawnPointerBall(){
 
-        pointerBall = SKSpriteNode.init(imageNamed: "/Users/karolwojtulewicz/Documents/Physics Game/physicsGame/physicsGame/ball.png")
+        pointerBall = SKSpriteNode.init(imageNamed: "ball.png")
         pointerBall?.size = CGSize(width: 100, height: 100)
         pointerBall?.alpha = 0.7
         pointerBall?.position = CGPoint(x: ball.position.x, y: self.frame.maxY-(pointerBall?.size.height)!/4)
@@ -209,32 +186,27 @@ class GameScene: SKScene {
 
     
     func touchMoved(toPoint pos : CGPoint) {
-//        if let n = self.spinnyNode?.copy() as! SKShapeNode? {
-//            n.position = pos
-//            n.strokeColor = SKColor.blue
-//            self.addChild(n)
-//        }
+
     }
     
     func touchUp(atPoint pos : CGPoint) {
-//        if let n = self.spinnyNode?.copy() as! SKShapeNode? {
-//            n.position = pos
-//            n.strokeColor = SKColor.red
-//            self.addChild(n)
-//        }
+
         
-        let wait = SKAction.wait(forDuration: 0.3)
-        
-        
-        let blow = self.childNode(withName: "blow")
-        
-        let remove = SKAction.run({() in blow?.removeFromParent()})
-        
-        self.run(SKAction.sequence([wait, remove]))
+//        let wait = SKAction.wait(forDuration: 0.3)
+//        
+//        
+//        let blow = self.childNode(withName: "blow")
+//        
+//        let remove = SKAction.run({() in blow?.removeFromParent()})
+//        
+//        self.run(SKAction.sequence([wait, remove]))
     }
-    
+    var countSeconds: Bool = false
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-//        if let label = self.label {
+        if(!countSeconds){
+            countSeconds = true
+            createScoreLabel()
+        }
 //            label.run(SKAction.init(named: "Pulse")!, withKey: "fadeInOut")
 //        }
         
@@ -261,6 +233,51 @@ class GameScene: SKScene {
         self.view?.presentScene(gameOverScene, transition: transition)
         
     }
+    
+    func createBackgrounds(){
+        
+        let background1 = SKSpriteNode.init(imageNamed: "background1.png")
+        let background2 = SKSpriteNode.init(imageNamed: "background2.png")
+        let background3 = SKSpriteNode.init(imageNamed: "background3.png")
+        let background4 = SKSpriteNode.init(imageNamed: "background4.png")
+        background1.scale(to: CGSize(width: self.size.width, height: self.size.height))
+        background1.position = CGPoint(x: 0, y: 0)
+        background1.zPosition = -2
+        background1.name = "background1"
+        background1.alpha = 1
+        background2.scale(to: CGSize(width: self.size.width, height: self.size.height))
+        background2.position = CGPoint(x: 0, y: 0)
+        background2.zPosition = -2
+        background2.name = "background2"
+        background2.alpha = 0
+        background3.scale(to: CGSize(width: self.size.width, height: self.size.height))
+        background3.position = CGPoint(x: 0, y: 0)
+        background3.zPosition = -2
+        background3.name = "background3"
+        background3.alpha = 0
+        background4.scale(to: CGSize(width: self.size.width, height: self.size.height))
+        background4.position = CGPoint(x: 0, y: 0)
+        background4.zPosition = -2
+        background4.name = "background4"
+        background4.alpha = 0
+
+        
+        self.addChild(background1)
+        self.addChild(background2)
+        self.addChild(background3)
+        self.addChild(background4)
+    }
+
+
+    
+//    func rotateBackground(){
+//        let background: SKSpriteNode = self.childNode(withName: "background") as! SKSpriteNode
+//        if(background.zRotation >= 2*CGFloat.pi){
+//            background.zRotation = 0
+//        }else {
+//            background.zRotation = background.zRotation + 0.001
+//        }
+//    }
 
     func checkIfOutOfBounds() {
         if let currentBall = self.childNode(withName: "ball") {
@@ -271,17 +288,18 @@ class GameScene: SKScene {
                 if(currentBall.position.y > self.size.height/2){
                     checkStatePointerBall(inView: isInView)
                 }else{
-                currentBall.removeFromParent()
-                //moveToGameOverScene()
-                spawnBall()
+                    currentBall.removeFromParent()
+                    //moveToGameOverScene()
+                    spawnBall()
                 }
             }else {
                 checkStatePointerBall(inView: isInView)
             }
-
+            
         }
-
+        
     }
+
 
     func checkStatePointerBall(inView: Bool){
         if(inView == false){
@@ -296,11 +314,162 @@ class GameScene: SKScene {
         }
 
     }
-    
-    
+
+    func secondCounter(_ currentTime: TimeInterval) -> Bool{
+
+        var delta = TimeInterval()
+        if let last = lastUpdateTime {
+            delta = currentTime - last
+        } else {
+            delta = currentTime
+        }
+        if delta > 1.0 {
+            //tick tock, a second has passed, update lastUpdateTime
+            lastUpdateTime = currentTime
+            return true
+        }else {
+            return false
+        }
+
+    }
+
+    var lastUpdateTime: TimeInterval?
+
+
+
+    func dayLabelUpdate(_ currentTime: TimeInterval){
+
+        if(secondCounter(currentTime) == true){
+            dayCounter = dayCounter + 1
+        }
+        if(dayCounter == 140){
+            score = score + 1
+            dayCounter = 0
+        }
+
+    }
+    var sunExists = false
+
+    // whole cycle is 140 seconds
+    // day = 70 seconds
+    // day -> night transition 10 seconds
+    // night 50 seconds
+    // night -> day transition 10 seconds
+
+    func checkIfDay() -> Bool{
+
+        if(dayCounter >= 0 && dayCounter <= 1){
+            return true
+        }else{
+            return false
+        }
+    }
+
+    func startBackgroundSwap(fromBackground bgF: String, toBackground bgT: String){
+
+        let currentBG = self.childNode(withName: bgF) as! SKSpriteNode
+        let nextBG =    self.childNode(withName: bgT) as! SKSpriteNode
+
+        let disappear = SKAction.fadeAlpha(to: 0, duration: 5)
+        let appear =    SKAction.fadeAlpha(to: 1, duration: 5)
+        currentBG.run(disappear)
+        nextBG.run(appear)
+
+    }
+
+    func checkIfNight() -> Bool{
+        // day = 60 seconds
+        if(dayCounter >= 80 && dayCounter <= 85){
+            return true
+        }else{
+            return false
+        }
+    }
+
+    func spawnStars(_ currentTime: TimeInterval){
+
+        var delta = TimeInterval()
+        if let last = lastUpdateTime {
+            delta = currentTime - last
+        } else {
+            delta = currentTime
+        }
+        if delta > 0.5 {
+            createStar()
+        }
+
+    }
+
+    func dayNightCycle() {
+        if (dayCounter == 70) {
+            startBackgroundSwap(fromBackground: "background1", toBackground: "background4")
+        } else if(dayCounter == 75){
+            startBackgroundSwap(fromBackground: "background4", toBackground: "background2")
+        }else if(dayCounter == 134){
+            startBackgroundSwap(fromBackground: "background2", toBackground: "background3")
+        }else if(dayCounter == 139){
+            startBackgroundSwap(fromBackground: "background3", toBackground: "background1")
+        }
+    }
+    func createStar(){
+        let star: SKSpriteNode = SKSpriteNode.init(imageNamed: "star.png")
+        star.position = CGPoint(x: randomNumber(constant: Int(self.size.width)), y: randomNumber(constant: Int(self.size.height)))
+        star.scale(to: CGSize(width: 1, height: 1))
+        star.zPosition = -1
+        let popStar = SKAction.scale(by: 5, duration: 0.5)
+        let popBackStar = SKAction.scale(by: 0.80, duration: 0.2)
+        let popBackStar2 = SKAction.scale(by: 0.01, duration: 0.3)
+        let keepStar = SKAction.move(by: CGVector(dx: 0, dy: 0), duration: 50)
+        let removeStar = SKAction.removeFromParent()
+        let sequence = SKAction.sequence([popStar,popBackStar, keepStar,popBackStar2, removeStar])
+        star.run(sequence)
+        self.addChild(star)
+    }
+
+    func createSun(){
+        let sun: SKSpriteNode = SKSpriteNode.init(imageNamed: "sun.png")
+        sun.scale(to: CGSize(width: 1, height: 1))
+        sun.position = CGPoint(x: self.size.width/2-sun.size.width/2, y: 150)
+
+        let bezierPath = UIBezierPath(arcCenter: CGPoint(x: 0,y: 150), radius: self.size.width/2-sun.size.width/2 , startAngle: CGFloat(0), endAngle: -CGFloat.pi, clockwise: true)
+
+//        let pathNode = SKShapeNode(path: bezierPath.cgPath)
+//        pathNode.strokeColor = UIColor.greenColor()
+//        pathNode.lineWidth = 3
+//        pathNode.position = CGPoint(x: 0, y: 0)
+//        addChild(pathNode)
+
+        let popSun = SKAction.scale(by: 100, duration: 0.5)
+        let popBackSun = SKAction.scale(by: 0.95, duration: 0.2)
+        let followPath = SKAction.follow(bezierPath.cgPath, asOffset: false, orientToPath: false, duration: 70)
+        let popBackSun2 = SKAction.scale(by: 0.01, duration: 0.3)
+        let removeSun = SKAction.removeFromParent()
+
+        let sequence = SKAction.sequence([popSun,popBackSun, followPath,popBackSun2, removeSun])
+        sun.run(sequence, completion: {self.sunExists = false})
+
+        self.addChild(sun)
+    }
+
     override func update(_ currentTime: TimeInterval) {
+                
+        dayLabelUpdate(currentTime)
+        
         checkIfOutOfBounds()
-        wallMovement()
+        
+        if(!sunExists && checkIfDay()){
+            createSun()
+//            stopGyroscope()
+            sunExists = true
+        }
+        if(checkIfNight()){
+            spawnStars(currentTime)
+//            startGyroscope()
+        }
+    
+
+//        wallMovement()
+        dayNightCycle()
         // Called before each frame is rendered
     }
 }
