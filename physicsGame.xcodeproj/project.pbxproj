@@ -18,7 +18,6 @@
 		16713BBEE4919C1E9C1CA811 /* physicsGameUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1671315A28C02C9DD135EA9B /* physicsGameUITests.swift */; };
 		982F6A151ED8028F00D98330 /* GameOver.sks in Resources */ = {isa = PBXBuildFile; fileRef = 982F6A141ED8028F00D98330 /* GameOver.sks */; };
 		982F6A171ED8042600D98330 /* GameOver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 982F6A161ED8042600D98330 /* GameOver.swift */; };
-		9851C6131EFE800B00BEB6EE /* character1.png in Resources */ = {isa = PBXBuildFile; fileRef = 9851C6121EFE800B00BEB6EE /* character1.png */; };
 		9851C6481EFE805A00BEB6EE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9851C6471EFE805A00BEB6EE /* Assets.xcassets */; };
 		9851C64A1EFE808F00BEB6EE /* dryer_with_hands.png in Resources */ = {isa = PBXBuildFile; fileRef = 9851C6491EFE808F00BEB6EE /* dryer_with_hands.png */; };
 		9851C6511EFE815D00BEB6EE /* background1.png in Resources */ = {isa = PBXBuildFile; fileRef = 9851C64B1EFE815D00BEB6EE /* background1.png */; };
@@ -69,7 +68,6 @@
 		16713E9372C079B9AF247338 /* physicsGameUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = physicsGameUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		982F6A141ED8028F00D98330 /* GameOver.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = GameOver.sks; sourceTree = "<group>"; };
 		982F6A161ED8042600D98330 /* GameOver.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GameOver.swift; sourceTree = "<group>"; };
-		9851C6121EFE800B00BEB6EE /* character1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = character1.png; sourceTree = "<group>"; };
 		9851C6471EFE805A00BEB6EE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		9851C6491EFE808F00BEB6EE /* dryer_with_hands.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = dryer_with_hands.png; sourceTree = "<group>"; };
 		9851C64B1EFE815D00BEB6EE /* background1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = background1.png; sourceTree = "<group>"; };
@@ -121,7 +119,6 @@
 				9851C6471EFE805A00BEB6EE /* Assets.xcassets */,
 				167135F3888708335229C018 /* Actions.sks */,
 				16713279628857F398985E04 /* GameScene.swift */,
-				9851C6121EFE800B00BEB6EE /* character1.png */,
 				9851C64B1EFE815D00BEB6EE /* background1.png */,
 				9851C6571EFE817100BEB6EE /* star.png */,
 				9851C65B1EFEB65300BEB6EE /* blower.png */,
@@ -304,7 +301,6 @@
 				9851C65C1EFEB65300BEB6EE /* blower.png in Resources */,
 				167134E24AD62F46A9AEE998 /* Actions.sks in Resources */,
 				9851C6561EFE815D00BEB6EE /* ball.png in Resources */,
-				9851C6131EFE800B00BEB6EE /* character1.png in Resources */,
 				9851C6481EFE805A00BEB6EE /* Assets.xcassets in Resources */,
 				167135E93D3FA38EFC48911C /* GameScene.sks in Resources */,
 			);

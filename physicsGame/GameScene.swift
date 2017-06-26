@@ -14,10 +14,11 @@ class GameScene: SKScene {
     
     private var stopWatch : Timer!
     private var textField = UITextField()
-    private var label : SKLabelNode?
+    private var label : SKLabelNode!
     private var ball : SKSpriteNode!
     private var pointerBall : SKSpriteNode?
     private let manager = CMMotionManager()
+    private var looserScreen : Bool = false
     var dayCounter = 0
     var dryer: SKSpriteNode! = nil
     var character: SKSpriteNode! = nil
@@ -26,12 +27,14 @@ class GameScene: SKScene {
 
     override func didMove(to view: SKView) {
         
+        createScoreLabel()
         createBackgrounds()
         self.physicsWorld.gravity = CGVector(dx: 0, dy: 0)
         
+//        createChain()
         spawnBall()
-        createDryer()
-        
+//        createDryer()
+    
     }
 //
 //    func startGyroscope(){
@@ -52,8 +55,6 @@ class GameScene: SKScene {
 
     func spawnBall(){
         
-        self.physicsWorld.gravity = CGVector(dx: 0, dy: 0)
-
         let ballSize = CGSize(width: 100, height: 100)
         ball = SKSpriteNode.init(imageNamed: "ball.png")
         ball.size = ballSize
@@ -64,22 +65,19 @@ class GameScene: SKScene {
         ball.physicsBody?.affectedByGravity = true
         ball.physicsBody?.allowsRotation = true
         
-        createScoreLabel()
 
         self.addChild(ball)
     }
     
     func createScoreLabel(){
         
-        let scoreLabel: SKLabelNode = SKLabelNode(text: "Score: 0")
-        scoreLabel.text = "Score: \(score)"
-        scoreLabel.position = CGPoint(x: 30, y: 580)
-        scoreLabel.fontName = "AppleColorEmoji"
-        scoreLabel.name = "scoreLabel"
-        scoreLabel.fontColor = UIColor.white
-        score = 0
+        label = SKLabelNode(text: "Score: 0")
+        label.position = CGPoint(x: 30, y: 580)
+        label.fontName = "AppleColorEmoji"
+        label.name = "scoreLabel"
+        label.fontColor = UIColor.white
         
-        self.addChild(scoreLabel)
+        self.addChild(label)
     }
 
     func addBlow(pos: CGPoint, direction: CGVector){
@@ -100,6 +98,8 @@ class GameScene: SKScene {
         
     }
 //
+    
+    
     func createDryer(){
         let y = CGFloat(400)
         let posY = CGFloat(-self.size.height/2 + y)
@@ -107,7 +107,7 @@ class GameScene: SKScene {
         dryer.scale(to: CGSize(width: dryer.size.width/4, height: dryer.size.height/4))
         dryer.anchorPoint = CGPoint(x: 0.5, y: 0.9)
         dryer.position = CGPoint(x: 0, y: posY)
-        dryer.zPosition = 0
+        dryer.zPosition = 2
         dryer.name = "dryer"
         self.addChild(dryer)
     }
@@ -121,19 +121,76 @@ class GameScene: SKScene {
     
     func touchDown(atPoint pos : CGPoint) {
         
+        
+        dayLabelUpdate()
         removeSprite()
         
+        if(looserScreen){
+            hideLabels()
+        }
         self.physicsWorld.gravity = CGVector(dx: 0, dy: -6)
-        let y = CGFloat(400)
-        let posY = CGFloat(-self.size.height/2 + y)
+        let limitY = CGFloat(400)
+        let posY = CGFloat(-self.size.height/2 + limitY)
         
-        let positionBlow: CGPoint = CGPoint(x: pos.x , y: posY)
+        var positionBlow: CGPoint! = nil
+        if(pos.y <= limitY){
+            positionBlow = CGPoint(x: pos.x , y: pos.y)
+        }else{
+            positionBlow = CGPoint(x: pos.x , y: posY)
+        }
+        applyForceVector(atPos: positionBlow)
         
-        updateDryer(atPoint: positionBlow)
+        
+//        updateDryer(atPoint: positionBlow)
     
     }
+    var endNode: SKSpriteNode! = nil
     
+    func createChain(){
+        
+        let startNode = SKSpriteNode.init(imageNamed: "chain")
+//        startNode.scale(to: CGSize(width: 10, height: 10))
+        startNode.position = CGPoint(x: -self.size.width/2+startNode.size.width/2, y: -self.size.height/2+startNode.size.width/2)
+        startNode.physicsBody = SKPhysicsBody(circleOfRadius: startNode.size.height/2)
+        startNode.physicsBody?.affectedByGravity = false
+        startNode.physicsBody?.isDynamic = false
+        
+        var tempNode : SKSpriteNode! = nil
+        
+        for index in 1...5{
+            let node = SKSpriteNode.init(imageNamed: "chain")
+            node.position = CGPoint(x: 50, y: 30)
+            node.physicsBody = SKPhysicsBody(circleOfRadius: node.size.height/2)
+            node.physicsBody?.affectedByGravity = true
+            node.physicsBody?.isDynamic = true
+            node.physicsBody?.pinned = true
+        
+            if(index == 1){
+                startNode.addChild(node)
+                self.addChild(startNode)
+            }else{
+                tempNode.addChild(node)
+            }
+            tempNode = node
+        }
+        
+        
+        endNode = SKSpriteNode.init(imageNamed: "chain")
+//        endNode.scale(to: CGSize(width: 10, height: 10))
+        endNode.position = CGPoint(x: 50, y: 30)
+        endNode.physicsBody = SKPhysicsBody(circleOfRadius: startNode.size.height/2)
+        endNode.physicsBody?.affectedByGravity = false
+        endNode.physicsBody?.isDynamic = false
+        endNode.physicsBody?.pinned = true
+        tempNode.addChild(endNode)
+        
+    }
+    
+    func updateChain(){
+        endNode.position = dryer.position
+    }
 
+    
     func applyForceVector(atPos pos: CGPoint){
         let force = 2500000*sqrt(2)/sqrt(pow((pos.x-ball.position.x+1), 2)+pow(pos.y-ball.position.y+1,2))
         
@@ -203,10 +260,7 @@ class GameScene: SKScene {
     }
     var countSeconds: Bool = false
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        if(!countSeconds){
-            countSeconds = true
-            createScoreLabel()
-        }
+    
 //            label.run(SKAction.init(named: "Pulse")!, withKey: "fadeInOut")
 //        }
         
@@ -289,7 +343,10 @@ class GameScene: SKScene {
                     checkStatePointerBall(inView: isInView)
                 }else{
                     currentBall.removeFromParent()
+                    print("spawn ball")
                     //moveToGameOverScene()
+                    self.physicsWorld.gravity = CGVector(dx: 0, dy: 0)
+                    showLoser()
                     spawnBall()
                 }
             }else {
@@ -299,7 +356,52 @@ class GameScene: SKScene {
         }
         
     }
-
+    
+    func hideLabels(){
+        let lolLabel = self.childNode(withName: "loserLabel") as! SKLabelNode
+        let tapLabel = self.childNode(withName: "tapToPlay") as! SKLabelNode
+        let blackBG = self.childNode(withName: "blackBG") as! SKShapeNode
+        
+        lolLabel.removeFromParent()
+        tapLabel.removeFromParent()
+        blackBG.removeFromParent()
+        self.looserScreen = false
+    }
+    
+    func showLoser(){
+        
+        self.looserScreen = true
+        
+        createRect()
+        
+        let lolLabel: SKLabelNode = SKLabelNode(text: "You loose m**********r")
+        lolLabel.fontName = "BradleyHandITCTT-Bold "
+        lolLabel.fontSize = 50
+        lolLabel.name = "loserLabel"
+        lolLabel.position = CGPoint(x: 0, y: 200)
+        lolLabel.zPosition = 5
+        
+        let tapTopPlayAgain: SKLabelNode = SKLabelNode(text: "Tap to play again")
+        tapTopPlayAgain.fontSize = 36
+        tapTopPlayAgain.position = CGPoint(x: 0, y: 0)
+        tapTopPlayAgain.name = "tapToPlay"
+        tapTopPlayAgain.zPosition = 5
+        tapTopPlayAgain.fontName = "AvenirNextCondensed-Regular"
+        
+        self.addChild(lolLabel)
+        self.addChild(tapTopPlayAgain)
+    }
+    
+    func createRect(){
+        let cgrRect: CGRect = CGRect(x: -self.size.width/2, y: -self.size.height/2, width: self.size.width, height: self.size.height)
+        
+        let blackBackground: SKShapeNode = SKShapeNode(rect: cgrRect)
+        blackBackground.fillColor = UIColor.black
+        blackBackground.alpha = 0.5
+        blackBackground.zPosition = 4
+        blackBackground.name = "blackBG"
+        self.addChild(blackBackground)
+    }
 
     func checkStatePointerBall(inView: Bool){
         if(inView == false){
@@ -332,21 +434,17 @@ class GameScene: SKScene {
         }
 
     }
+    
 
     var lastUpdateTime: TimeInterval?
 
 
 
-    func dayLabelUpdate(_ currentTime: TimeInterval){
+    func dayLabelUpdate(){
 
-        if(secondCounter(currentTime) == true){
-            dayCounter = dayCounter + 1
-        }
-        if(dayCounter == 140){
-            score = score + 1
-            dayCounter = 0
-        }
-
+        score = score + 1
+        label.text = String("Score: \(score)")
+        
     }
     var sunExists = false
 
@@ -452,8 +550,9 @@ class GameScene: SKScene {
     }
 
     override func update(_ currentTime: TimeInterval) {
-                
-        dayLabelUpdate(currentTime)
+        
+//        updateChain()
+        
         
         checkIfOutOfBounds()
         
