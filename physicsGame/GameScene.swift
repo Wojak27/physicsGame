@@ -22,6 +22,8 @@ class GameScene: SKScene {
     var dayCounter = 0
     var dryer: SKSpriteNode! = nil
     var character: SKSpriteNode! = nil
+    var panGesture = UIPanGestureRecognizer()
+    
 
     private var score:Int = 0
 
@@ -30,12 +32,14 @@ class GameScene: SKScene {
         createScoreLabel()
         createBackgrounds()
         self.physicsWorld.gravity = CGVector(dx: 0, dy: 0)
+        self.view?.addGestureRecognizer(panGesture)
         
 //        createChain()
         spawnBall()
 //        createDryer()
     
     }
+
 //
 //    func startGyroscope(){
 //        manager.deviceMotionUpdateInterval = 0.01
@@ -55,12 +59,13 @@ class GameScene: SKScene {
 
     func spawnBall(){
         
-        let ballSize = CGSize(width: 100, height: 100)
-        ball = SKSpriteNode.init(imageNamed: "ball.png")
+        ball = SKSpriteNode.init(imageNamed: "banana.png")
+        let bHeightRatio = CGFloat(100)/ball.size.height
+        let ballSize = CGSize(width: ball.size.width * bHeightRatio, height: 100)
         ball.size = ballSize
         ball.name = "ball"
         ball.position = CGPoint(x: 0, y: 0)
-        ball.physicsBody = SKPhysicsBody(circleOfRadius: ballSize.height/2)
+        ball.physicsBody = SKPhysicsBody(texture: ball.texture!, size: ballSize)
         ball.physicsBody?.angularDamping = 2
         ball.physicsBody?.affectedByGravity = true
         ball.physicsBody?.allowsRotation = true
@@ -268,6 +273,8 @@ class GameScene: SKScene {
     }
     
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+        
+        
 //        for t in touches { self.touchMoved(toPoint: t.location(in: self)) }
     }
     
