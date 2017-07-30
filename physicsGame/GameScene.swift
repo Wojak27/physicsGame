@@ -10,8 +10,11 @@ import SpriteKit
 import GameplayKit
 import CoreMotion
 
-class GameScene: SKScene {
+class GameScene: SKScene, SKPhysicsContactDelegate  {
     
+    
+    private let starCategory: UInt32 = 0x1 << 0
+    private let basketCategory: UInt32 = 0x1 << 1
     private var stopWatch : Timer!
     private var textField = UITextField()
     private var label : SKLabelNode!
@@ -19,9 +22,12 @@ class GameScene: SKScene {
     private var pointerBall : SKSpriteNode?
     private let manager = CMMotionManager()
     private var looserScreen : Bool = false
+    private var isPlaying : Bool = false
+    private var menuButton : SKSpriteNode?
+    private var playAbainButton : SKSpriteNode?
     var dayCounter = 0
-    var dryer: SKSpriteNode! = nil
-    var character: SKSpriteNode! = nil
+    var basket: SKSpriteNode! = nil
+    var fallingStar: SKSpriteNode! = nil
     var panGesture = UIPanGestureRecognizer()
     
 
@@ -34,29 +40,66 @@ class GameScene: SKScene {
         self.physicsWorld.gravity = CGVector(dx: 0, dy: 0)
         self.view?.addGestureRecognizer(panGesture)
         
-//        createChain()
+        self.physicsWorld.contactDelegate = self
+        
+        spawnFallingStar()
+        basket = spawnBasket()
+        self.addChild(basket)
+        startGyroscope()
+        
         spawnBall()
-//        createDryer()
     
     }
+    
+    func didBegin(_ contact: SKPhysicsContact) {
+        let secondNode = contact.bodyB.node as! SKSpriteNode
+        
+        if (contact.bodyA.categoryBitMask == starCategory) &&
+            (contact.bodyB.categoryBitMask == basketCategory) {
+            
+            let contactPoint = contact.contactPoint
+            let contact_y = contactPoint.y
+            let target_y = secondNode.position.y
+            let margin = secondNode.frame.size.height/2 - 25
+            
+            if (contact_y > (target_y - margin)) &&
+                (contact_y < (target_y + margin)) {
+                print("Hit")
+            }
+        }
+    }
+    
+    func spawnFallingStar(){
+        fallingStar = createStar(true)
+        let scaleUpAction = SKAction.scale(by: 30, duration: 0.7)
+        let scaleDownAction = SKAction.scale(by: 0.9, duration: 0.1)
+        let dropStarAction = SKAction.move(to: CGPoint(x: fallingStar.position.x, y: self.frame.minY), duration: 3)
+        let removeFromParent = SKAction.removeFromParent()
+        //call on the action.
+        let sequence = SKAction.sequence([scaleUpAction,scaleDownAction,dropStarAction, removeFromParent])
+        fallingStar.run(sequence)
+        
+        self.addChild(fallingStar)
+    }
 
-//
-//    func startGyroscope(){
-//        manager.deviceMotionUpdateInterval = 0.01
-//        manager.startDeviceMotionUpdates(to: OperationQueue.current!){
-//            [weak self] (data: CMDeviceMotion?, error: Error?) in
-//            if let gravity = data?.gravity {
-//                self?.dryer.position.x = (self?.dryer.position.x)! + CGFloat(gravity.x*10)
-//            
-//            }
-//        }
-//    }
-//    
-//    func stopGyroscope(){
-//        
-//        manager.stopGyroUpdates()
-//    }
-
+    
+    func startGyroscope(){
+        print("startGyroscope")
+        manager.deviceMotionUpdateInterval = 0.01
+        manager.startDeviceMotionUpdates(to: OperationQueue.current!){
+            [weak self] (data: CMDeviceMotion?, error: Error?) in
+            if let gravity = data?.gravity {
+                self?.basket.position.x = (self?.basket.position.x)! + CGFloat(gravity.x*10)
+                
+            }
+        }
+    }
+    
+    func stopGyroscope(){
+        
+        manager.stopGyroUpdates()
+    }
+    
     func spawnBall(){
         
         ball = SKSpriteNode.init(imageNamed: "banana.png")
@@ -64,11 +107,12 @@ class GameScene: SKScene {
         let ballSize = CGSize(width: ball.size.width * bHeightRatio, height: 100)
         ball.size = ballSize
         ball.name = "ball"
-        ball.position = CGPoint(x: 0, y: 0)
+        ball.position = CGPoint(x: 0, y: 200)
         ball.physicsBody = SKPhysicsBody(texture: ball.texture!, size: ballSize)
         ball.physicsBody?.angularDamping = 2
         ball.physicsBody?.affectedByGravity = true
         ball.physicsBody?.allowsRotation = true
+        ball.physicsBody?.categoryBitMask = starCategory
         
 
         self.addChild(ball)
@@ -102,43 +146,22 @@ class GameScene: SKScene {
         self.addChild(burstNode)
         
     }
-//
-    
-    
-    func createDryer(){
-        let y = CGFloat(400)
-        let posY = CGFloat(-self.size.height/2 + y)
-        dryer = SKSpriteNode.init(imageNamed: "blower.png")
-        dryer.scale(to: CGSize(width: dryer.size.width/4, height: dryer.size.height/4))
-        dryer.anchorPoint = CGPoint(x: 0.5, y: 0.9)
-        dryer.position = CGPoint(x: 0, y: posY)
-        dryer.zPosition = 2
-        dryer.name = "dryer"
-        self.addChild(dryer)
-    }
-
-    func updateDryer(atPoint pos : CGPoint){
-        let dryer: SKSpriteNode = self.childNode(withName: "dryer") as! SKSpriteNode
-        dryer.zRotation =   atan(-(ball.position.x-pos.x)/(ball.position.y-pos.y))
-        let moveBottomLeft = SKAction.move(to: pos, duration:0.1)
-        dryer.run(moveBottomLeft, completion: {self.applyForceVector(atPos: pos)})
-    }
     
     func touchDown(atPoint pos : CGPoint) {
         
-        
+        isPlaying = true
         dayLabelUpdate()
         removeSprite()
         
         if(looserScreen){
-            hideLabels()
+            //hideLabels()
         }
         self.physicsWorld.gravity = CGVector(dx: 0, dy: -6)
         let limitY = CGFloat(400)
         let posY = CGFloat(-self.size.height/2 + limitY)
         
         var positionBlow: CGPoint! = nil
-        if(pos.y <= limitY){
+        if(pos.y <= posY){
             positionBlow = CGPoint(x: pos.x , y: pos.y)
         }else{
             positionBlow = CGPoint(x: pos.x , y: posY)
@@ -150,51 +173,6 @@ class GameScene: SKScene {
     
     }
     var endNode: SKSpriteNode! = nil
-    
-    func createChain(){
-        
-        let startNode = SKSpriteNode.init(imageNamed: "chain")
-//        startNode.scale(to: CGSize(width: 10, height: 10))
-        startNode.position = CGPoint(x: -self.size.width/2+startNode.size.width/2, y: -self.size.height/2+startNode.size.width/2)
-        startNode.physicsBody = SKPhysicsBody(circleOfRadius: startNode.size.height/2)
-        startNode.physicsBody?.affectedByGravity = false
-        startNode.physicsBody?.isDynamic = false
-        
-        var tempNode : SKSpriteNode! = nil
-        
-        for index in 1...5{
-            let node = SKSpriteNode.init(imageNamed: "chain")
-            node.position = CGPoint(x: 50, y: 30)
-            node.physicsBody = SKPhysicsBody(circleOfRadius: node.size.height/2)
-            node.physicsBody?.affectedByGravity = true
-            node.physicsBody?.isDynamic = true
-            node.physicsBody?.pinned = true
-        
-            if(index == 1){
-                startNode.addChild(node)
-                self.addChild(startNode)
-            }else{
-                tempNode.addChild(node)
-            }
-            tempNode = node
-        }
-        
-        
-        endNode = SKSpriteNode.init(imageNamed: "chain")
-//        endNode.scale(to: CGSize(width: 10, height: 10))
-        endNode.position = CGPoint(x: 50, y: 30)
-        endNode.physicsBody = SKPhysicsBody(circleOfRadius: startNode.size.height/2)
-        endNode.physicsBody?.affectedByGravity = false
-        endNode.physicsBody?.isDynamic = false
-        endNode.physicsBody?.pinned = true
-        tempNode.addChild(endNode)
-        
-    }
-    
-    func updateChain(){
-        endNode.position = dryer.position
-    }
-
     
     func applyForceVector(atPos pos: CGPoint){
         let force = 2500000*sqrt(2)/sqrt(pow((pos.x-ball.position.x+1), 2)+pow(pos.y-ball.position.y+1,2))
@@ -228,13 +206,19 @@ class GameScene: SKScene {
         let randomNumber: Int = Int(randomize)-constant/2
         return randomNumber
     }
+    
+    func randomPositiveNumber(constant: Int)->Int{
+        let randomize: Int = Int(arc4random_uniform(UInt32(constant)))
+        return randomize
+    }
 
     func spawnPointerBall(){
 
-        pointerBall = SKSpriteNode.init(imageNamed: "ball.png")
-        pointerBall?.size = CGSize(width: 100, height: 100)
+        pointerBall = SKSpriteNode.init(imageNamed: "banana.png")
+        pointerBall?.size = CGSize(width: 100, height: (pointerBall?.size.height)!/(pointerBall?.size.width)! * CGFloat(100))
         pointerBall?.alpha = 0.7
         pointerBall?.position = CGPoint(x: ball.position.x, y: self.frame.maxY-(pointerBall?.size.height)!/4)
+        pointerBall?.zRotation = ball.zRotation
         self.addChild(pointerBall!)
 
     }
@@ -253,15 +237,6 @@ class GameScene: SKScene {
     
     func touchUp(atPoint pos : CGPoint) {
 
-        
-//        let wait = SKAction.wait(forDuration: 0.3)
-//        
-//        
-//        let blow = self.childNode(withName: "blow")
-//        
-//        let remove = SKAction.run({() in blow?.removeFromParent()})
-//        
-//        self.run(SKAction.sequence([wait, remove]))
     }
     var countSeconds: Bool = false
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -269,7 +244,10 @@ class GameScene: SKScene {
 //            label.run(SKAction.init(named: "Pulse")!, withKey: "fadeInOut")
 //        }
         
-        for t in touches { self.touchDown(atPoint: t.location(in: self)) }
+        for t in touches {
+            self.touchDown(atPoint: t.location(in: self))
+            
+        }
     }
     
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -279,7 +257,16 @@ class GameScene: SKScene {
     }
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        for t in touches { self.touchUp(atPoint: t.location(in: self)) }
+        for touch in touches {
+            if(looserScreen){
+                let location = touch.location(in: self)
+                // Check if the location of the touch is within the button's bounds
+                if (playAbainButton?.contains(location))! {
+                    print("tapped!")
+                }
+            }
+            
+        }
 
     }
     
@@ -289,9 +276,9 @@ class GameScene: SKScene {
     
     func moveToGameOverScene(){
         
-        let transition = SKTransition.flipHorizontal(withDuration: 1)
-        let gameOverScene = GameOver(size: self.size)
-        self.view?.presentScene(gameOverScene, transition: transition)
+        //let transition = SKTransition.flipHorizontal(withDuration: 1)
+        //let gameOverScene = GameOver(size: self.size)
+        //self.view?.presentScene(gameOverScene, transition: transition)
         
     }
     
@@ -328,31 +315,32 @@ class GameScene: SKScene {
         self.addChild(background3)
         self.addChild(background4)
     }
-
-
     
-//    func rotateBackground(){
-//        let background: SKSpriteNode = self.childNode(withName: "background") as! SKSpriteNode
-//        if(background.zRotation >= 2*CGFloat.pi){
-//            background.zRotation = 0
-//        }else {
-//            background.zRotation = background.zRotation + 0.001
-//        }
-//    }
-
+    var inBasket: Bool = false
+    
     func checkIfOutOfBounds() {
         if let currentBall = self.childNode(withName: "ball") {
             var isInView: Bool = true
+            if(inBasket){
+                fallingStar.position = basket.position
+            }
+            if(fallingStar.intersects(basket) && !inBasket){
+                print("intersects")
+                fallingStar.removeAllActions()
+                fallingStar.position = basket.position
+                inBasket = true
+            }
             if(!intersects(currentBall)) {
                 isInView = false
                 print("node is not in the scene")
-                if(currentBall.position.y > self.size.height/2){
+                if(currentBall.position.y > self.size.height/2 && currentBall.position.x > -self.size.width/2 && currentBall.position.x < self.size.width/2){
                     checkStatePointerBall(inView: isInView)
-                }else{
+                }else if(isPlaying){
                     currentBall.removeFromParent()
                     print("spawn ball")
                     //moveToGameOverScene()
                     self.physicsWorld.gravity = CGVector(dx: 0, dy: 0)
+                    isPlaying = false
                     showLoser()
                     spawnBall()
                 }
@@ -375,28 +363,53 @@ class GameScene: SKScene {
         self.looserScreen = false
     }
     
+    var button: SKSpriteNode?
+    
     func showLoser(){
         
         self.looserScreen = true
+        isPlaying = true
         
         createRect()
         
-        let lolLabel: SKLabelNode = SKLabelNode(text: "You loose m**********r")
+        // Create a simple red rectangle that's 100x44
+        button = SKSpriteNode(color: SKColor.red, size: CGSize(width: 100, height: 44))
+        // Put it in the center of the scene
+        button?.position = CGPoint(x: 0, y: 0);
+        createLooserText()
+        
+        self.addChild(button!)
+        
+    }
+    
+    func createLooserText(){
+        let lolLabel: SKLabelNode = SKLabelNode(text: "You loose!")
         lolLabel.fontName = "BradleyHandITCTT-Bold "
         lolLabel.fontSize = 50
         lolLabel.name = "loserLabel"
         lolLabel.position = CGPoint(x: 0, y: 200)
         lolLabel.zPosition = 5
         
-        let tapTopPlayAgain: SKLabelNode = SKLabelNode(text: "Tap to play again")
-        tapTopPlayAgain.fontSize = 36
-        tapTopPlayAgain.position = CGPoint(x: 0, y: 0)
-        tapTopPlayAgain.name = "tapToPlay"
-        tapTopPlayAgain.zPosition = 5
-        tapTopPlayAgain.fontName = "AvenirNextCondensed-Regular"
-        
         self.addChild(lolLabel)
-        self.addChild(tapTopPlayAgain)
+    }
+    
+    func createPlayAgainButton(){
+        playAbainButton = SKSpriteNode(color: SKColor.blue, size: CGSize(width: 100, height: 44))
+        // Put it in the center of the scene
+        playAbainButton?.position = CGPoint(x: self.frame.midY, y: self.frame.midY);
+        playAbainButton?.zPosition = 5
+        
+        self.addChild(playAbainButton!)
+    }
+    
+    func createMenuButton(){
+        
+        menuButton = SKSpriteNode(color: SKColor.red, size: CGSize(width: 100, height: 44))
+        // Put it in the center of the scene
+        menuButton?.position = CGPoint(x: self.frame.midX, y: self.frame.midY-100);
+        menuButton?.zPosition = 5
+        
+        self.addChild(menuButton!)
     }
     
     func createRect(){
@@ -408,6 +421,8 @@ class GameScene: SKScene {
         blackBackground.zPosition = 4
         blackBackground.name = "blackBG"
         self.addChild(blackBackground)
+        createPlayAgainButton()
+        createMenuButton()
     }
 
     func checkStatePointerBall(inView: Bool){
@@ -452,6 +467,14 @@ class GameScene: SKScene {
         score = score + 1
         label.text = String("Score: \(score)")
         
+    }
+    
+    func spawnBasket()-> SKSpriteNode{
+        let basket: SKSpriteNode = SKSpriteNode.init(imageNamed: "basket")
+        basket.scale(to: CGSize(width: 100, height: 100))
+        basket.position = CGPoint(x: self.frame.midX, y: self.frame.minY + basket.frame.maxY+100)
+        
+        return basket
     }
     var sunExists = false
 
@@ -500,7 +523,8 @@ class GameScene: SKScene {
             delta = currentTime
         }
         if delta > 0.5 {
-            createStar()
+            self.addChild(createStar(false))
+            
         }
 
     }
@@ -516,9 +540,14 @@ class GameScene: SKScene {
             startBackgroundSwap(fromBackground: "background3", toBackground: "background1")
         }
     }
-    func createStar(){
+    func createStar(_ isFallingStar: Bool) -> SKSpriteNode{
         let star: SKSpriteNode = SKSpriteNode.init(imageNamed: "star.png")
-        star.position = CGPoint(x: randomNumber(constant: Int(self.size.width)), y: randomNumber(constant: Int(self.size.height)))
+        if(isFallingStar){
+            star.position = CGPoint(x: randomNumber(constant: Int(self.size.width)), y: randomPositiveNumber(constant: Int(self.size.height/2)))
+        }else{
+            star.position = CGPoint(x: randomNumber(constant: Int(self.size.width)), y: randomNumber(constant: Int(self.size.height)))
+        }
+        
         star.scale(to: CGSize(width: 1, height: 1))
         star.zPosition = -1
         let popStar = SKAction.scale(by: 5, duration: 0.5)
@@ -528,7 +557,7 @@ class GameScene: SKScene {
         let removeStar = SKAction.removeFromParent()
         let sequence = SKAction.sequence([popStar,popBackStar, keepStar,popBackStar2, removeStar])
         star.run(sequence)
-        self.addChild(star)
+        return star
     }
 
     func createSun(){
