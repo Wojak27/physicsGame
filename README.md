@@ -3,4 +3,9 @@ This is a side project written in iOS and SpriteKit to test the possibilities of
 The objective in the game is to keep the banana in the air for as long as possible, while collecting stars that fall from the sky.
 
 ![alt text](https://github.com/Wojak27/physicsGame/blob/master/ezgif.com-video-to-gif.gif)
+
+### Feel free to check it out!
+
+### You can se the video presentation here:
+
 [![Video presentation](https://img.youtube.com/vi/yMFk99oKinA&feature=share/0.jpg)](https://www.youtube.com/watch?v=yMFk99oKinA&feature=share)
